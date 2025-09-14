@@ -66,15 +66,10 @@ export default {
           DEFAULT: "hsl(var(--sale))",
           foreground: "hsl(var(--sale-foreground))",
         },
-        sidebar: {
-          DEFAULT: "hsl(var(--sidebar-background))",
-          foreground: "hsl(var(--sidebar-foreground))",
-          primary: "hsl(var(--sidebar-primary))",
-          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
-          accent: "hsl(var(--sidebar-accent))",
-          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
-          border: "hsl(var(--sidebar-border))",
-          ring: "hsl(var(--sidebar-ring))",
+        admin: {
+          sidebar: "hsl(var(--admin-sidebar))",
+          "sidebar-foreground": "hsl(var(--admin-sidebar-foreground))",
+          "sidebar-border": "hsl(var(--admin-sidebar-border))",
         },
       },
       borderRadius: {
@@ -99,6 +94,9 @@ export default {
             height: "0",
           },
         },
+      },
+      spacing: {
+        '70': '17.5rem',
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",

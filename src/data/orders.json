@@ -1,0 +1,162 @@
+[
+  {
+    "id": "ORDER-001",
+    "customerInfo": {
+      "fullName": "John Doe",
+      "phone": "+1-555-0123",
+      "email": "john.doe@email.com",
+      "address": "123 Main Street",
+      "city": "New York",
+      "province": "NY",
+      "note": "Please deliver after 5 PM"
+    },
+    "items": [
+      {
+        "id": 1,
+        "name": "Premium Wireless Headphones",
+        "price": 299.99,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=500&fit=crop"
+      },
+      {
+        "id": 3,
+        "name": "Smart Fitness Watch",
+        "price": 199.99,
+        "quantity": 2,
+        "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop"
+      }
+    ],
+    "total": 699.97,
+    "status": "pending",
+    "orderDate": "2024-01-15T10:30:00Z",
+    "paymentMethod": "Cash on Delivery"
+  },
+  {
+    "id": "ORDER-002",
+    "customerInfo": {
+      "fullName": "Sarah Johnson",
+      "phone": "+1-555-0456",
+      "email": "sarah.j@email.com",
+      "address": "456 Oak Avenue",
+      "city": "Los Angeles",
+      "province": "CA",
+      "note": ""
+    },
+    "items": [
+      {
+        "id": 2,
+        "name": "Organic Cotton T-Shirt",
+        "price": 29.99,
+        "quantity": 3,
+        "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop"
+      },
+      {
+        "id": 4,
+        "name": "Leather Messenger Bag",
+        "price": 159.99,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&h=500&fit=crop"
+      }
+    ],
+    "total": 249.96,
+    "status": "shipped",
+    "orderDate": "2024-01-14T14:20:00Z",
+    "paymentMethod": "Cash on Delivery"
+  },
+  {
+    "id": "ORDER-003",
+    "customerInfo": {
+      "fullName": "Mike Chen",
+      "phone": "+1-555-0789",
+      "email": "mike.chen@email.com",
+      "address": "789 Pine Street",
+      "city": "Chicago",
+      "province": "IL",
+      "note": "Ring doorbell twice"
+    },
+    "items": [
+      {
+        "id": 6,
+        "name": "Bluetooth Speaker",
+        "price": 79.99,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500&h=500&fit=crop"
+      },
+      {
+        "id": 9,
+        "name": "Wireless Charging Pad",
+        "price": 34.99,
+        "quantity": 2,
+        "image": "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=500&h=500&fit=crop"
+      }
+    ],
+    "total": 149.97,
+    "status": "delivered",
+    "orderDate": "2024-01-12T09:15:00Z",
+    "paymentMethod": "Cash on Delivery"
+  },
+  {
+    "id": "ORDER-004",
+    "customerInfo": {
+      "fullName": "Emily Davis",
+      "phone": "+1-555-0321",
+      "email": "",
+      "address": "321 Elm Drive",
+      "city": "Miami",
+      "province": "FL",
+      "note": "Leave at front door if not home"
+    },
+    "items": [
+      {
+        "id": 10,
+        "name": "Sunglasses",
+        "price": 149.99,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500&h=500&fit=crop"
+      },
+      {
+        "id": 11,
+        "name": "Yoga Mat",
+        "price": 49.99,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500&h=500&fit=crop"
+      }
+    ],
+    "total": 199.98,
+    "status": "cancelled",
+    "orderDate": "2024-01-13T16:45:00Z",
+    "paymentMethod": "Cash on Delivery"
+  },
+  {
+    "id": "ORDER-005",
+    "customerInfo": {
+      "fullName": "Alex Rivera",
+      "phone": "+1-555-0654",
+      "email": "alex.rivera@email.com",
+      "address": "654 Maple Lane",
+      "city": "Seattle",
+      "province": "WA",
+      "note": ""
+    },
+    "items": [
+      {
+        "id": 5,
+        "name": "Ceramic Coffee Mug Set",
+        "price": 39.99,
+        "quantity": 2,
+        "image": "https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?w=500&h=500&fit=crop"
+      },
+      {
+        "id": 12,
+        "name": "Scented Candles Set",
+        "price": 44.99,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1602874801212-b98d3a5adf9a?w=500&h=500&fit=crop"
+      }
+    ],
+    "total": 124.97,
+    "status": "pending",
+    "orderDate": "2024-01-16T11:00:00Z",
+    "paymentMethod": "Cash on Delivery"
+  }
+]

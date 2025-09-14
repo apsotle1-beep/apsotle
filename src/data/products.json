@@ -1,0 +1,98 @@
+[
+  {
+    "id": 1,
+    "name": "Premium Wireless Headphones",
+    "description": "High-quality wireless headphones with noise cancellation and 30-hour battery life. Perfect for music lovers and professionals.",
+    "price": 299.99,
+    "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=500&fit=crop",
+    "category": "Electronics"
+  },
+  {
+    "id": 2,
+    "name": "Organic Cotton T-Shirt",
+    "description": "Comfortable and sustainable organic cotton t-shirt in classic fit. Available in multiple colors.",
+    "price": 29.99,
+    "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=500&fit=crop",
+    "category": "Clothing"
+  },
+  {
+    "id": 3,
+    "name": "Smart Fitness Watch",
+    "description": "Advanced fitness tracker with heart rate monitoring, GPS, and smartphone connectivity. Water-resistant design.",
+    "price": 199.99,
+    "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&h=500&fit=crop",
+    "category": "Electronics"
+  },
+  {
+    "id": 4,
+    "name": "Leather Messenger Bag",
+    "description": "Handcrafted genuine leather messenger bag with laptop compartment. Perfect for work or travel.",
+    "price": 159.99,
+    "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&h=500&fit=crop",
+    "category": "Accessories"
+  },
+  {
+    "id": 5,
+    "name": "Ceramic Coffee Mug Set",
+    "description": "Set of 4 handmade ceramic coffee mugs with unique glaze patterns. Dishwasher and microwave safe.",
+    "price": 39.99,
+    "image": "https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?w=500&h=500&fit=crop",
+    "category": "Home"
+  },
+  {
+    "id": 6,
+    "name": "Bluetooth Speaker",
+    "description": "Portable bluetooth speaker with 360-degree sound and 12-hour battery. Perfect for outdoor adventures.",
+    "price": 79.99,
+    "image": "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=500&h=500&fit=crop",
+    "category": "Electronics"
+  },
+  {
+    "id": 7,
+    "name": "Denim Jacket",
+    "description": "Classic denim jacket in vintage wash. Timeless style that pairs well with any outfit.",
+    "price": 89.99,
+    "image": "https://images.unsplash.com/photo-1544022613-e87ca75a784a?w=500&h=500&fit=crop",
+    "category": "Clothing"
+  },
+  {
+    "id": 8,
+    "name": "Stainless Steel Water Bottle",
+    "description": "Insulated stainless steel water bottle keeps drinks cold for 24 hours or hot for 12 hours. BPA-free.",
+    "price": 24.99,
+    "image": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=500&h=500&fit=crop",
+    "category": "Home"
+  },
+  {
+    "id": 9,
+    "name": "Wireless Charging Pad",
+    "description": "Fast wireless charging pad compatible with all Qi-enabled devices. Sleek and minimalist design.",
+    "price": 34.99,
+    "image": "https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=500&h=500&fit=crop",
+    "category": "Electronics"
+  },
+  {
+    "id": 10,
+    "name": "Sunglasses",
+    "description": "Stylish polarized sunglasses with UV protection. Classic aviator design that never goes out of style.",
+    "price": 149.99,
+    "image": "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500&h=500&fit=crop",
+    "category": "Accessories"
+  },
+  {
+    "id": 11,
+    "name": "Yoga Mat",
+    "description": "Premium non-slip yoga mat with extra cushioning. Eco-friendly and durable design for all levels.",
+    "price": 49.99,
+    "image": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500&h=500&fit=crop",
+    "category": "Sports"
+  },
+  {
+    "id": 12,
+    "name": "Scented Candles Set",
+    "description": "Set of 3 premium scented candles with relaxing lavender, vanilla, and eucalyptus fragrances.",
+    "price": 44.99,
+    "image": "https://images.unsplash.com/photo-1602874801212-b98d3a5adf9a?w=500&h=500&fit=crop",
+    "category": "Home"
+  }
+]

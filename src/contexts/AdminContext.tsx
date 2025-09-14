@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 interface AdminUser {
-  username: string;
+  id: string;
+  email: string | undefined;
   role: string;
 }
 
@@ -14,39 +17,52 @@ interface AdminContextType {
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
-// Admin credentials (in a real app, this would be handled by a backend)
-const ADMIN_CREDENTIALS = {
-  username: 'admin',
-  password: 'admin123'
-};
-
 export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AdminUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
-    // Check if admin is already logged in (from localStorage)
-    const savedUser = localStorage.getItem('adminUser');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      setUser(session ? { id: session.user.id, email: session.user.email, role: 'admin' } : null);
+    };
+
+    fetchSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event: AuthChangeEvent, session: Session | null) => {
+        setSession(session);
+        setUser(session ? { id: session.user.id, email: session.user.email, role: 'admin' } : null);
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      const adminUser = { username, role: 'admin' };
-      setUser(adminUser);
-      localStorage.setItem('adminUser', JSON.stringify(adminUser));
+    // For demo purposes, check against hardcoded admin credentials
+    if (username === 'admin' && password === 'admin123') {
+      // Create a mock user session for demo
+      const mockUser = {
+        id: 'admin-demo-user',
+        email: 'admin@demo.com',
+        role: 'admin'
+      };
+      setUser(mockUser);
       return true;
     }
-    return false;
+    
+    // If not demo credentials, try Supabase authentication
+    const { error } = await supabase.auth.signInWithPassword({ email: username, password });
+    return !error;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('adminUser');
   };
 
   return (

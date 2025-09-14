@@ -4,16 +4,33 @@ import { ArrowRight, Star, Truck, Shield, Headphones } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Layout from '@/components/Layout';
 import ProductCard from '@/components/ProductCard';
+import AuthTest from '@/components/AuthTest';
 import { Button } from '@/components/ui/button';
 import { Product } from '@/contexts/CartContext';
-import productsData from '@/data/products.json';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    // Get first 4 products as featured
-    setFeaturedProducts(productsData.slice(0, 4));
+    const fetchProducts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .limit(4);
+        
+        if (error) {
+          console.error('Error fetching products:', error);
+        } else {
+          setFeaturedProducts(data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
+    };
+
+    fetchProducts();
   }, []);
 
   const features = [
@@ -143,6 +160,22 @@ const Index = () => {
               </Link>
             </Button>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Auth Test Section - Remove this after testing */}
+      <section className="py-16 bg-muted/30">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl font-bold mb-4">Authentication Test</h2>
+            <p className="text-xl text-muted-foreground">Test Google OAuth integration</p>
+          </motion.div>
+          <AuthTest />
         </div>
       </section>
 

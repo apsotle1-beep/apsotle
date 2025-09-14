@@ -100,11 +100,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             <div className="flex items-center space-x-3 mb-3">
               <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center">
                 <span className="text-primary-foreground font-medium text-sm">
-                  {user?.username.charAt(0).toUpperCase()}
+                  {user?.email?.charAt(0).toUpperCase()}
                 </span>
               </div>
               <div>
-                <p className="font-medium text-sm">{user?.username}</p>
+                <p className="font-medium text-sm">{user?.email}</p>
                 <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
               </div>
             </div>

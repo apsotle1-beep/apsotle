@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Search, Store } from 'lucide-react';
+import { ShoppingCart, Search, Store, User, LogIn } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import LoginModal from '@/components/LoginModal';
+import UserMenu from '@/components/UserMenu';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,6 +14,8 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { getTotalItems } = useCart();
+  const { isAuthenticated } = useAuth();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const totalItems = getTotalItems();
 
   return (
@@ -42,28 +48,52 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </Link>
             </nav>
 
-            {/* Cart */}
-            <Link 
-              to="/cart" 
-              className="relative p-2 hover:bg-accent rounded-lg transition-colors"
-            >
-              <ShoppingCart className="h-6 w-6" />
-              {totalItems > 0 && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="cart-badge"
+            {/* User Authentication & Cart */}
+            <div className="flex items-center space-x-2">
+              {/* User Menu or Login Button */}
+              {isAuthenticated ? (
+                <UserMenu />
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="flex items-center space-x-2"
                 >
-                  {totalItems}
-                </motion.span>
+                  <LogIn className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sign In</span>
+                </Button>
               )}
-            </Link>
+
+              {/* Cart */}
+              <Link 
+                to="/cart" 
+                className="relative p-2 hover:bg-accent rounded-lg transition-colors"
+              >
+                <ShoppingCart className="h-6 w-6" />
+                {totalItems > 0 && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="cart-badge"
+                  >
+                    {totalItems}
+                  </motion.span>
+                )}
+              </Link>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main>{children}</main>
+
+      {/* Login Modal */}
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={() => setIsLoginModalOpen(false)} 
+      />
 
       {/* Footer */}
       <footer className="bg-muted mt-20">

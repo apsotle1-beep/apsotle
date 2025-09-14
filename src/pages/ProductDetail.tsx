@@ -6,7 +6,7 @@ import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Product, useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
-import productsData from '@/data/products.json';
+import { supabase } from '@/integrations/supabase/client';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,21 +15,68 @@ const ProductDetail = () => {
   const { toast } = useToast();
   const [product, setProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const foundProduct = productsData.find(p => p.id === Number(id));
-    if (foundProduct) {
-      setProduct(foundProduct);
-    } else {
-      navigate('/products');
-    }
+    const fetchProduct = async () => {
+      if (!id) {
+        navigate('/products');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', Number(id))
+          .single();
+
+        if (error) {
+          console.error('Error fetching product:', error);
+          navigate('/products');
+        } else if (data) {
+          setProduct(data);
+        } else {
+          navigate('/products');
+        }
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        navigate('/products');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
   }, [id, navigate]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center py-20">
+            <div className="text-6xl mb-4">⏳</div>
+            <h3 className="text-2xl font-semibold mb-2">Loading Product...</h3>
+            <p className="text-muted-foreground">Please wait while we fetch the product details</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!product) {
     return (
       <Layout>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">Loading...</div>
+          <div className="text-center py-20">
+            <div className="text-6xl mb-4">❌</div>
+            <h3 className="text-2xl font-semibold mb-2">Product Not Found</h3>
+            <p className="text-muted-foreground mb-4">The product you're looking for doesn't exist.</p>
+            <Button asChild>
+              <Link to="/products">Back to Products</Link>
+            </Button>
+          </div>
         </div>
       </Layout>
     );

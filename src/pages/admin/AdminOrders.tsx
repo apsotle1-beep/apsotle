@@ -21,11 +21,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import ordersData from '@/data/orders.json';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Order {
-  id: string;
-  customerInfo: {
+  id: number;
+  order_id: string;
+  customer_info: {
     fullName: string;
     phone: string;
     email: string;
@@ -43,21 +44,47 @@ interface Order {
   }>;
   total: number;
   status: string;
-  orderDate: string;
-  paymentMethod: string;
+  created_at: string;
+  payment_method: string;
 }
 
 const AdminOrders = () => {
-  const [orders, setOrders] = useState<Order[]>(ordersData);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>(ordersData);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   const { toast } = useToast();
   
   const statusOptions = ['All', 'pending', 'shipped', 'delivered', 'cancelled'];
+
+  // Fetch orders from database
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching orders:', error);
+        } else {
+          setOrders(data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
 
   // Filter orders based on search and status
   useEffect(() => {
@@ -65,9 +92,9 @@ const AdminOrders = () => {
     
     if (searchTerm) {
       filtered = filtered.filter(order =>
-        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customerInfo.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customerInfo.phone.includes(searchTerm)
+        order.order_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.customer_info.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.customer_info.phone.includes(searchTerm)
       );
     }
     
@@ -108,18 +135,42 @@ const AdminOrders = () => {
     }
   };
 
-  const updateOrderStatus = (orderId: string, newStatus: string) => {
-    const updatedOrders = orders.map(order =>
-      order.id === orderId ? { ...order, status: newStatus } : order
-    );
-    
-    setOrders(updatedOrders);
-    console.log(`Updated order ${orderId} status to ${newStatus}`);
-    
-    toast({
-      title: "Success",
-      description: `Order status updated to ${newStatus}`,
-    });
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('order_id', orderId);
+
+      if (error) {
+        console.error('Error updating order status:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update order status",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update local state
+      const updatedOrders = orders.map(order =>
+        order.order_id === orderId ? { ...order, status: newStatus } : order
+      );
+      
+      setOrders(updatedOrders);
+      
+      toast({
+        title: "Success",
+        description: `Order status updated to ${newStatus}`,
+      });
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update order status",
+        variant: "destructive",
+      });
+    }
   };
 
   const openOrderDetails = (order: Order) => {
@@ -189,7 +240,15 @@ const AdminOrders = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map((order, index) => (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-12">
+                        <div className="text-6xl mb-4">⏳</div>
+                        <h3 className="text-2xl font-semibold mb-2">Loading Orders...</h3>
+                        <p className="text-muted-foreground">Please wait while we fetch the orders</p>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredOrders.map((order, index) => (
                     <motion.tr
                       key={order.id}
                       initial={{ opacity: 0, y: 20 }}
@@ -197,11 +256,11 @@ const AdminOrders = () => {
                       transition={{ duration: 0.3, delay: index * 0.05 }}
                       className="hover:bg-muted/50"
                     >
-                      <TableCell className="font-medium">{order.id}</TableCell>
+                      <TableCell className="font-medium">{order.order_id}</TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{order.customerInfo.fullName}</p>
-                          <p className="text-sm text-muted-foreground">{order.customerInfo.phone}</p>
+                          <p className="font-medium">{order.customer_info.fullName}</p>
+                          <p className="text-sm text-muted-foreground">{order.customer_info.phone}</p>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -231,7 +290,7 @@ const AdminOrders = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {new Date(order.orderDate).toLocaleDateString()}
+                        {new Date(order.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
@@ -245,7 +304,7 @@ const AdminOrders = () => {
                           </Button>
                           <Select
                             value={order.status}
-                            onValueChange={(value) => updateOrderStatus(order.id, value)}
+                            onValueChange={(value) => updateOrderStatus(order.order_id, value)}
                           >
                             <SelectTrigger className="w-24">
                               <SelectValue />
@@ -297,9 +356,9 @@ const AdminOrders = () => {
                 {/* Order Summary */}
                 <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                   <div>
-                    <h3 className="font-semibold text-lg">{selectedOrder.id}</h3>
+                    <h3 className="font-semibold text-lg">{selectedOrder.order_id}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Placed on {new Date(selectedOrder.orderDate).toLocaleDateString()}
+                      Placed on {new Date(selectedOrder.created_at).toLocaleDateString()}
                     </p>
                   </div>
                   <Badge className={getStatusColor(selectedOrder.status)}>
@@ -319,28 +378,28 @@ const AdminOrders = () => {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">Name</p>
-                      <p className="font-medium">{selectedOrder.customerInfo.fullName}</p>
+                      <p className="font-medium">{selectedOrder.customer_info.fullName}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Phone</p>
-                      <p className="font-medium">{selectedOrder.customerInfo.phone}</p>
+                      <p className="font-medium">{selectedOrder.customer_info.phone}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Email</p>
-                      <p className="font-medium">{selectedOrder.customerInfo.email || 'Not provided'}</p>
+                      <p className="font-medium">{selectedOrder.customer_info.email || 'Not provided'}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">City, Province</p>
-                      <p className="font-medium">{selectedOrder.customerInfo.city}, {selectedOrder.customerInfo.province}</p>
+                      <p className="font-medium">{selectedOrder.customer_info.city}, {selectedOrder.customer_info.province}</p>
                     </div>
                     <div className="col-span-2">
                       <p className="text-muted-foreground">Delivery Address</p>
-                      <p className="font-medium">{selectedOrder.customerInfo.address}</p>
+                      <p className="font-medium">{selectedOrder.customer_info.address}</p>
                     </div>
-                    {selectedOrder.customerInfo.note && (
+                    {selectedOrder.customer_info.note && (
                       <div className="col-span-2">
                         <p className="text-muted-foreground">Note</p>
-                        <p className="font-medium">{selectedOrder.customerInfo.note}</p>
+                        <p className="font-medium">{selectedOrder.customer_info.note}</p>
                       </div>
                     )}
                   </div>
@@ -378,7 +437,7 @@ const AdminOrders = () => {
                     <span>${selectedOrder.total.toFixed(2)}</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Payment Method: {selectedOrder.paymentMethod}
+                    Payment Method: {selectedOrder.payment_method}
                   </p>
                 </div>
 
@@ -387,7 +446,7 @@ const AdminOrders = () => {
                   <Select
                     value={selectedOrder.status}
                     onValueChange={(value) => {
-                      updateOrderStatus(selectedOrder.id, value);
+                      updateOrderStatus(selectedOrder.order_id, value);
                       setSelectedOrder({...selectedOrder, status: value});
                     }}
                   >

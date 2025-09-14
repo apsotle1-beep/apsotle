@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import productsData from '@/data/products.json';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Product {
   id: number;
@@ -28,12 +28,13 @@ interface Product {
   description: string;
   price: number;
   image: string;
+  video: string;
   category: string;
 }
 
 const AdminProducts = () => {
-  const [products, setProducts] = useState<Product[]>(productsData);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>(productsData);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -44,12 +45,30 @@ const AdminProducts = () => {
     description: '',
     price: 0,
     image: '',
+    video: '',
     category: ''
   });
+  const [newProductImage, setNewProductImage] = useState<File | null>(null);
+  const [newProductVideo, setNewProductVideo] = useState<File | null>(null);
   
   const { toast } = useToast();
   
-  const categories = ['All', ...Array.from(new Set(products.map(p => p.category)))];
+  // Predefined categories for the dropdown
+  const predefinedCategories = ['Electronics', 'Clothing', 'Accessories', 'Home', 'Sports', 'Books', 'Beauty', 'Toys', 'Automotive', 'Garden'];
+  const categories = ['All', ...predefinedCategories, ...Array.from(new Set(products.map(p => p.category).filter(cat => !predefinedCategories.includes(cat))))];
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    const { data, error } = await supabase.from('products').select('*');
+    if (error) {
+      console.error(error);
+    } else {
+      setProducts(data);
+    }
+  };
 
   // Filter products based on search and category
   useEffect(() => {
@@ -69,7 +88,24 @@ const AdminProducts = () => {
     setFilteredProducts(filtered);
   }, [products, searchTerm, selectedCategory]);
 
-  const handleAddProduct = () => {
+  const handleFileUpload = async (file: File) => {
+    const { data, error } = await supabase.storage
+      .from('product-media')
+      .upload(`${file.name}-${Date.now()}`, file);
+
+    if (error) {
+      console.error(error);
+      return null;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('product-media')
+      .getPublicUrl(data.path);
+
+    return publicUrl;
+  };
+
+  const handleAddProduct = async () => {
     if (!newProduct.name || !newProduct.description || !newProduct.price || !newProduct.category) {
       toast({
         title: "Error",
@@ -79,41 +115,88 @@ const AdminProducts = () => {
       return;
     }
 
-    const product: Product = {
-      ...newProduct,
-      id: Math.max(...products.map(p => p.id)) + 1,
-      image: newProduct.image || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=500&h=500&fit=crop'
-    };
+    let imageUrl = newProduct.image;
+    let videoUrl = newProduct.video;
 
-    setProducts([...products, product]);
-    console.log('Added product:', product);
-    
-    toast({
-      title: "Success",
-      description: "Product added successfully",
-    });
-    
-    setNewProduct({ name: '', description: '', price: 0, image: '', category: '' });
-    setIsAddModalOpen(false);
+    if (newProduct.image instanceof File) {
+      imageUrl = await handleFileUpload(newProduct.image);
+    }
+
+    if (newProduct.video instanceof File) {
+      videoUrl = await handleFileUpload(newProduct.video);
+    }
+
+    const { data, error } = await supabase.from('products').insert([
+      {
+        name: newProduct.name,
+        description: newProduct.description,
+        price: newProduct.price,
+        image: imageUrl,
+        video: videoUrl,
+        category: newProduct.category,
+      },
+    ]);
+
+    if (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: "Failed to add product",
+        variant: "destructive",
+      });
+    } else {
+      fetchProducts();
+      toast({
+        title: "Success",
+        description: "Product added successfully",
+      });
+      setNewProduct({ name: '', description: '', price: 0, image: '', video: '', category: '' });
+      setIsAddModalOpen(false);
+    }
   };
 
-  const handleEditProduct = () => {
+  const handleEditProduct = async () => {
     if (!selectedProduct) return;
 
-    const updatedProducts = products.map(p => 
-      p.id === selectedProduct.id ? selectedProduct : p
-    );
-    
-    setProducts(updatedProducts);
-    console.log('Updated product:', selectedProduct);
-    
-    toast({
-      title: "Success",
-      description: "Product updated successfully",
-    });
-    
-    setIsEditModalOpen(false);
-    setSelectedProduct(null);
+    let imageUrl = selectedProduct.image;
+    let videoUrl = selectedProduct.video;
+
+    if (selectedProduct.image instanceof File) {
+      imageUrl = await handleFileUpload(selectedProduct.image);
+    }
+
+    if (selectedProduct.video instanceof File) {
+      videoUrl = await handleFileUpload(selectedProduct.video);
+    }
+
+    const { data, error } = await supabase
+      .from('products')
+      .update({
+        name: selectedProduct.name,
+        description: selectedProduct.description,
+        price: selectedProduct.price,
+        image: imageUrl,
+        video: videoUrl,
+        category: selectedProduct.category,
+      })
+      .eq('id', selectedProduct.id);
+
+    if (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: "Failed to update product",
+        variant: "destructive",
+      });
+    } else {
+      fetchProducts();
+      toast({
+        title: "Success",
+        description: "Product updated successfully",
+      });
+      setIsEditModalOpen(false);
+      setSelectedProduct(null);
+    }
   };
 
   const handleDeleteProduct = (productId: number) => {
@@ -202,12 +285,19 @@ const AdminProducts = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="image">Image URL (optional)</Label>
+                  <Label htmlFor="image">Image</Label>
                   <Input
                     id="image"
-                    value={newProduct.image}
-                    onChange={(e) => setNewProduct({...newProduct, image: e.target.value})}
-                    placeholder="https://example.com/image.jpg"
+                    type="file"
+                    onChange={(e) => setNewProductImage(e.target.files ? e.target.files[0] : null)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="video">Video</Label>
+                  <Input
+                    id="video"
+                    type="file"
+                    onChange={(e) => setNewProductVideo(e.target.files ? e.target.files[0] : null)}
                   />
                 </div>
                 <div className="flex gap-2 pt-4">
@@ -389,11 +479,19 @@ const AdminProducts = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="edit-image">Image URL</Label>
+                  <Label htmlFor="edit-image">Image</Label>
                   <Input
                     id="edit-image"
-                    value={selectedProduct.image}
-                    onChange={(e) => setSelectedProduct({...selectedProduct, image: e.target.value})}
+                    type="file"
+                    onChange={(e) => setSelectedProduct({...selectedProduct, image: e.target.files ? e.target.files[0] : ''})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-video">Video</Label>
+                  <Input
+                    id="edit-video"
+                    type="file"
+                    onChange={(e) => setSelectedProduct({...selectedProduct, video: e.target.files ? e.target.files[0] : ''})}
                   />
                 </div>
                 <div className="flex gap-2 pt-4">

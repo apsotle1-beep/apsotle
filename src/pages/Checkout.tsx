@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FormData {
   fullName: string;
@@ -74,8 +75,43 @@ const Checkout = () => {
 
     setIsSubmitting(true);
 
-    // Simulate order processing
     try {
+      const orderId = `ORD-${Date.now()}`;
+      
+      // Prepare order data for database
+      const orderData = {
+        order_id: orderId,
+        customer_info: {
+          fullName: formData.fullName,
+          phone: formData.phoneNumber,
+          email: formData.email || null,
+          address: formData.deliveryAddress,
+          city: formData.city,
+          province: formData.province,
+          note: formData.note || null,
+        },
+        items: items.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+        })),
+        total: total,
+        status: 'pending',
+        payment_method: 'Cash on Delivery (COD)',
+      };
+
+      // Save order to database
+      const { data, error } = await supabase
+        .from('orders')
+        .insert([orderData]);
+
+      if (error) {
+        console.error('Error saving order:', error);
+        throw new Error('Failed to save order to database');
+      }
+
       // Log order details to console (as requested)
       const orderDetails = {
         customer: formData,
@@ -83,7 +119,7 @@ const Checkout = () => {
         total: total,
         orderDate: new Date().toISOString(),
         paymentMethod: 'Cash on Delivery (COD)',
-        orderId: `ORD-${Date.now()}`,
+        orderId: orderId,
       };
       
       console.log('=== ORDER DETAILS ===');
@@ -105,6 +141,7 @@ const Checkout = () => {
       });
       
     } catch (error) {
+      console.error('Order processing error:', error);
       toast({
         title: "Order failed",
         description: "There was an error processing your order. Please try again.",

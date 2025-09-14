@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { 
   Package, 
   ShoppingCart, 
@@ -12,8 +13,7 @@ import {
 } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import productsData from '@/data/products.json';
-import ordersData from '@/data/orders.json';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DashboardStats {
   totalProducts: number;
@@ -35,26 +35,37 @@ const AdminDashboard = () => {
   });
 
   useEffect(() => {
-    // Calculate dashboard statistics
-    const totalProducts = productsData.length;
-    const totalOrders = ordersData.length;
-    const pendingOrders = ordersData.filter(order => order.status === 'pending').length;
-    const deliveredOrders = ordersData.filter(order => order.status === 'delivered').length;
-    const totalRevenue = ordersData
-      .filter(order => order.status !== 'cancelled')
-      .reduce((sum, order) => sum + order.total, 0);
-    const recentOrders = ordersData
-      .sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime())
-      .slice(0, 5);
+    const fetchStats = async () => {
+      const { data: productsData, error: productsError } = await supabase.from('products').select('*');
+      const { data: ordersData, error: ordersError } = await supabase.from('orders').select('*');
 
-    setStats({
-      totalProducts,
-      totalOrders,
-      pendingOrders,
-      deliveredOrders,
-      totalRevenue,
-      recentOrders
-    });
+      if (productsError || ordersError) {
+        console.error(productsError || ordersError);
+        return;
+      }
+
+      const totalProducts = productsData.length;
+      const totalOrders = ordersData.length;
+      const pendingOrders = ordersData.filter(order => order.status === 'pending').length;
+      const deliveredOrders = ordersData.filter(order => order.status === 'delivered').length;
+      const totalRevenue = ordersData
+        .filter(order => order.status !== 'cancelled')
+        .reduce((sum, order) => sum + order.total, 0);
+      const recentOrders = ordersData
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 5);
+
+      setStats({
+        totalProducts,
+        totalOrders,
+        pendingOrders,
+        deliveredOrders,
+        totalRevenue,
+        recentOrders
+      });
+    };
+
+    fetchStats();
   }, []);
 
   const getStatusIcon = (status: string) => {
@@ -175,14 +186,14 @@ const AdminDashboard = () => {
                         </span>
                       </div>
                       <div>
-                        <p className="font-medium">{order.id}</p>
-                        <p className="text-sm text-muted-foreground">{order.customerInfo.fullName}</p>
+                        <p className="font-medium">{order.order_id}</p>
+                        <p className="text-sm text-muted-foreground">{order.customer_info?.fullName || 'Unknown Customer'}</p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="font-medium">${order.total.toFixed(2)}</p>
                       <p className="text-sm text-muted-foreground">
-                        {new Date(order.orderDate).toLocaleDateString()}
+                        {new Date(order.created_at).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -224,7 +235,7 @@ const AdminDashboard = () => {
                       Shipped
                     </span>
                     <span className="font-medium">
-                      {ordersData.filter(order => order.status === 'shipped').length}
+                      {stats.totalOrders - stats.pendingOrders - stats.deliveredOrders - stats.recentOrders.filter(order => order.status === 'cancelled').length}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -240,7 +251,7 @@ const AdminDashboard = () => {
                       Cancelled
                     </span>
                     <span className="font-medium">
-                      {ordersData.filter(order => order.status === 'cancelled').length}
+                      {stats.recentOrders.filter(order => order.status === 'cancelled').length}
                     </span>
                   </div>
                 </div>
@@ -263,22 +274,22 @@ const AdminDashboard = () => {
                     Manage your store efficiently with these quick links:
                   </p>
                   <div className="grid grid-cols-2 gap-2">
-                    <button className="p-3 text-left rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors">
+                    <Link to="/admin/products" className="p-3 text-left rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors">
                       <Package className="h-4 w-4 mb-1" />
                       <p className="text-sm font-medium">Add Product</p>
-                    </button>
-                    <button className="p-3 text-left rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors">
+                    </Link>
+                    <Link to="/admin/orders" className="p-3 text-left rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors">
                       <ShoppingCart className="h-4 w-4 mb-1" />
                       <p className="text-sm font-medium">View Orders</p>
-                    </button>
-                    <button className="p-3 text-left rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors">
+                    </Link>
+                    <Link to="/admin/customers" className="p-3 text-left rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors">
                       <Users className="h-4 w-4 mb-1" />
                       <p className="text-sm font-medium">Customers</p>
-                    </button>  
-                    <button className="p-3 text-left rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors">
+                    </Link>  
+                    <Link to="/admin/analytics" className="p-3 text-left rounded-lg border border-border hover:bg-accent hover:text-accent-foreground transition-colors">
                       <TrendingUp className="h-4 w-4 mb-1" />
                       <p className="text-sm font-medium">Analytics</p>
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </CardContent>

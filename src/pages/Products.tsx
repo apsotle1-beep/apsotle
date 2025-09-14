@@ -6,13 +6,39 @@ import ProductCard from '@/components/ProductCard';
 import SearchBar from '@/components/SearchBar';
 import CategoryFilter from '@/components/CategoryFilter';
 import { Product } from '@/contexts/CartContext';
-import productsData from '@/data/products.json';
+import { supabase } from '@/integrations/supabase/client';
 
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [products] = useState<Product[]>(productsData);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch products from Supabase
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching products:', error);
+        } else {
+          setProducts(data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -109,7 +135,18 @@ const Products = () => {
         </motion.div>
 
         {/* Products Grid */}
-        {filteredProducts.length > 0 ? (
+        {loading ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="text-center py-20"
+          >
+            <div className="text-6xl mb-4">⏳</div>
+            <h3 className="text-2xl font-semibold mb-2">Loading Products...</h3>
+            <p className="text-muted-foreground">Please wait while we fetch the latest products</p>
+          </motion.div>
+        ) : filteredProducts.length > 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

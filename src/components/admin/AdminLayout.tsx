@@ -37,7 +37,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background lg:grid lg:grid-cols-[17.5rem_1fr]">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -50,7 +50,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       <motion.aside
         initial={false}
         animate={{ x: sidebarOpen ? 0 : -280 }}
-        className="fixed inset-y-0 left-0 z-50 w-70 bg-card border-r border-border lg:translate-x-0 lg:static lg:inset-0"
+        className="fixed inset-y-0 left-0 z-50 w-70 bg-card border-r border-border lg:translate-x-0 lg:relative"
       >
         <div className="flex h-full flex-col">
           {/* Logo */}
@@ -122,7 +122,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       </motion.aside>
 
       {/* Main content */}
-      <div className="lg:pl-70">
+      <div className="flex flex-col flex-1 min-h-screen">
         {/* Top bar */}
         <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
           <Button
@@ -133,14 +133,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          
           <div className="flex-1">
             <h1 className="font-semibold text-lg">
               {sidebarItems.find(item => item.path === location.pathname)?.label || 'Admin Panel'}
             </h1>
           </div>
         </header>
-
         {/* Page content */}
         <main className="flex-1 p-6">
           {children}

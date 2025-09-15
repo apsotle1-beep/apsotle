@@ -77,6 +77,15 @@ const OrderConfirmation = () => {
                       ${orderDetails.total.toFixed(2)}
                     </div>
                   </div>
+                  {orderDetails.customer.email && (
+                    <div className="md:col-span-2">
+                      <span className="text-muted-foreground">Email Confirmation:</span>
+                      <div className="flex items-center gap-2 text-green-600">
+                        <CheckCircle className="w-4 h-4" />
+                        Sent to {orderDetails.customer.email}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </motion.div>
 

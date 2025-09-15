@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { sendOrderConfirmationEmail } from '@/services/emailService';
 
 interface FormData {
   fullName: string;
@@ -130,6 +131,23 @@ const Checkout = () => {
       console.log('Payment Method:', orderDetails.paymentMethod);
       console.log('Order Date:', orderDetails.orderDate);
       console.log('====================');
+
+      // Send order confirmation email if email is provided
+      if (formData.email) {
+        try {
+          const emailSent = await sendOrderConfirmationEmail(orderDetails);
+          if (emailSent) {
+            console.log('Order confirmation email sent successfully');
+          } else {
+            console.log('Failed to send order confirmation email');
+          }
+        } catch (error) {
+          console.error('Error sending order confirmation email:', error);
+          // Don't fail the order if email sending fails
+        }
+      } else {
+        console.log('No email provided - skipping email notification');
+      }
 
       // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 2000));

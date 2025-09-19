@@ -209,6 +209,52 @@ const AdminOrders = () => {
           }
         }
       }
+
+      // If delivered, notify delivered webhook via GET with order details
+      if (newStatus === 'delivered') {
+        const order = updatedOrders.find(o => o.order_id === orderId);
+        if (order) {
+          try {
+            const baseUrl = 'https://n8n-covv.onrender.com/webhook/delivered';
+            const url = new URL(baseUrl);
+            const params = new URLSearchParams();
+
+            params.set('event', 'order_delivered');
+            params.set('orderId', order.order_id);
+            params.set('total', Number(order.items.reduce((sum, it) => sum + it.price * it.quantity, 0)).toFixed(2));
+            params.set('paymentMethod', order.payment_method || '');
+            params.set('orderDate', order.created_at);
+
+            // Customer details
+            params.set('customer_fullName', order.customer_info.fullName || '');
+            params.set('customer_phoneNumber', order.customer_info.phone || '');
+            if (order.customer_info.email) params.set('customer_email', order.customer_info.email);
+            params.set('customer_deliveryAddress', order.customer_info.address || '');
+            params.set('customer_city', order.customer_info.city || '');
+            params.set('customer_province', order.customer_info.province || '');
+            if (order.customer_info.note) params.set('customer_note', order.customer_info.note);
+
+            // Items with URLs
+            const itemsPayload = order.items.map(item => ({
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+              image: item.image,
+              total: Number((item.price * item.quantity).toFixed(2)),
+              url: `${window.location.origin}/product/${item.id}`,
+            }));
+            params.set('items', JSON.stringify(itemsPayload));
+            params.set('itemsCount', String(order.items.reduce((sum, it) => sum + it.quantity, 0)));
+
+            url.search = params.toString();
+            await fetch(url.toString(), { method: 'GET' });
+            console.log('Delivered webhook (GET) notified successfully');
+          } catch (webhookError) {
+            console.error('Failed to notify delivered webhook (GET):', webhookError);
+          }
+        }
+      }
     } catch (error) {
       console.error('Error updating order status:', error);
       toast({

@@ -10,7 +10,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { sendOrderConfirmationEmail } from '@/services/emailService';
 
 interface FormData {
   fullName: string;
@@ -132,21 +131,46 @@ const Checkout = () => {
       console.log('Order Date:', orderDetails.orderDate);
       console.log('====================');
 
-      // Send order confirmation email if email is provided
-      if (formData.email) {
-        try {
-          const emailSent = await sendOrderConfirmationEmail(orderDetails);
-          if (emailSent) {
-            console.log('Order confirmation email sent successfully');
-          } else {
-            console.log('Failed to send order confirmation email');
-          }
-        } catch (error) {
-          console.error('Error sending order confirmation email:', error);
-          // Don't fail the order if email sending fails
-        }
-      } else {
-        console.log('No email provided - skipping email notification');
+      // Notify webhook on order confirmation (GET request with query params)
+      try {
+        const baseUrl = 'https://n8n-covv.onrender.com/webhook/edef961a-4ff7-401f-a59e-f457107f4129';
+        const url = new URL(baseUrl);
+        const params = new URLSearchParams();
+        
+        params.set('event', 'order_confirmed');
+        params.set('orderId', orderDetails.orderId);
+        params.set('total', orderDetails.total.toFixed(2));
+        params.set('paymentMethod', orderDetails.paymentMethod);
+        params.set('orderDate', orderDetails.orderDate);
+        
+        // Customer details
+        params.set('customer_fullName', formData.fullName);
+        params.set('customer_phoneNumber', formData.phoneNumber);
+        if (formData.email) params.set('customer_email', formData.email);
+        params.set('customer_deliveryAddress', formData.deliveryAddress);
+        params.set('customer_city', formData.city);
+        params.set('customer_province', formData.province);
+        if (formData.note) params.set('customer_note', formData.note);
+        
+        // Items: send JSON string
+        const itemsPayload = items.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+          total: Number((item.price * item.quantity).toFixed(2)),
+          url: `${window.location.origin}/product/${item.id}`,
+        }));
+        params.set('items', JSON.stringify(itemsPayload));
+        params.set('itemsCount', String(getTotalItems()));
+        
+        url.search = params.toString();
+        await fetch(url.toString(), { method: 'GET' });
+        console.log('Webhook (GET) notified successfully');
+      } catch (webhookError) {
+        console.error('Failed to notify webhook (GET):', webhookError);
+        // Continue without blocking user
       }
 
       // Simulate processing time

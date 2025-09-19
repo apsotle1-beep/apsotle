@@ -14,8 +14,6 @@ import {
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { testEmailFunctionality } from '@/utils/emailTest';
-import { Button } from '@/components/ui/button';
 
 interface DashboardStats {
   totalProducts: number;
@@ -292,25 +290,6 @@ const AdminDashboard = () => {
                       <TrendingUp className="h-4 w-4 mb-1" />
                       <p className="text-sm font-medium">Analytics</p>
                     </Link>
-                  </div>
-                  
-                  {/* Email Test Section */}
-                  <div className="mt-6 pt-4 border-t border-border">
-                    <h4 className="text-sm font-medium mb-3">Email Testing</h4>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Test the order confirmation email functionality
-                    </p>
-                    <Button 
-                      onClick={testEmailFunctionality}
-                      variant="outline" 
-                      size="sm"
-                      className="w-full"
-                    >
-                      Test Email Functionality
-                    </Button>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Check browser console for email simulation details
-                    </p>
                   </div>
                 </div>
               </CardContent>

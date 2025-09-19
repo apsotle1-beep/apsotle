@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { User, LogOut, ShoppingBag, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 const UserMenu: React.FC = () => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     try {
@@ -81,7 +83,7 @@ const UserMenu: React.FC = () => {
           <ShoppingBag className="mr-2 h-4 w-4" />
           <span>Orders</span>
         </DropdownMenuItem>
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/settings')}>
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
         </DropdownMenuItem>

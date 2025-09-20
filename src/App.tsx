@@ -20,6 +20,7 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AuthCallback from "./pages/AuthCallback";
 import Settings from "./pages/Settings";
+import Review from "./pages/Review";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
               <Route path="/order-confirmation" element={<OrderConfirmation />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/review/:orderId" element={<Review />} />
               
               {/* Admin Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />

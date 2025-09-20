@@ -4,9 +4,13 @@ import { ArrowLeft, ShoppingCart, Star, Truck, Shield, RotateCcw, ChevronLeft, C
 import { motion, AnimatePresence } from 'framer-motion';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Product, useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Tables } from '@/integrations/supabase/types';
+
+type Review = Tables<'reviews'>;
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +24,8 @@ const ProductDetail = () => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
   const [videoError, setVideoError] = useState<string | null>(null);
 
   // Create media items array for the gallery
@@ -148,6 +154,8 @@ const ProductDetail = () => {
         } else if (data) {
           setProduct(data);
           setCurrentSlide(0); // Reset slide when product changes
+          // Fetch reviews for this product
+          fetchReviews(Number(id));
         } else {
           navigate('/products');
         }
@@ -161,6 +169,51 @@ const ProductDetail = () => {
 
     fetchProduct();
   }, [id, navigate]);
+
+  // Fetch reviews for the product
+  const fetchReviews = async (productId: number) => {
+    try {
+      setReviewsLoading(true);
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('product_id', productId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching reviews:', error);
+      } else {
+        setReviews(data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  // Calculate average rating
+  const averageRating = reviews.length > 0 
+    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+    : 0;
+
+  // Render star rating
+  const renderStars = (rating: number, size: string = 'w-5 h-5') => {
+    return (
+      <div className="flex items-center">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star 
+            key={star} 
+            className={`${size} ${
+              star <= rating 
+                ? 'fill-yellow-400 text-yellow-400' 
+                : 'text-gray-300'
+            }`} 
+          />
+        ))}
+      </div>
+    );
+  };
 
   // Ensure current slide is within bounds
   useEffect(() => {
@@ -536,15 +589,11 @@ const ProductDetail = () => {
               
               {/* Rating */}
               <div className="flex items-center gap-2 mb-4">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star 
-                      key={i} 
-                      className="w-5 h-5 fill-yellow-400 text-yellow-400" 
-                    />
-                  ))}
-                </div>
-                <span className="text-sm text-muted-foreground">(128 reviews)</span>
+                {renderStars(averageRating)}
+                <span className="text-sm text-muted-foreground">
+                  ({reviews.length} review{reviews.length !== 1 ? 's' : ''})
+                  {averageRating > 0 && ` - ${averageRating.toFixed(1)} stars`}
+                </span>
               </div>
 
               <div className="price text-3xl mb-6">
@@ -623,6 +672,103 @@ const ProductDetail = () => {
             </div>
           </motion.div>
         </div>
+
+        {/* Customer Reviews Section */}
+        <section className="mt-20">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            <h2 className="text-3xl font-bold mb-8">Customer Reviews</h2>
+            
+            {reviewsLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading reviews...</p>
+              </div>
+            ) : reviews.length > 0 ? (
+              <div className="space-y-6">
+                {/* Reviews Summary */}
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        {renderStars(averageRating, 'w-6 h-6')}
+                        <div>
+                          <div className="text-2xl font-bold">{averageRating.toFixed(1)}</div>
+                          <div className="text-sm text-muted-foreground">
+                            Based on {reviews.length} review{reviews.length !== 1 ? 's' : ''}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Rating Distribution */}
+                      <div className="space-y-1">
+                        {[5, 4, 3, 2, 1].map((rating) => {
+                          const count = reviews.filter(r => r.rating === rating).length;
+                          const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                          return (
+                            <div key={rating} className="flex items-center gap-2 text-sm">
+                              <span className="w-3">{rating}</span>
+                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                              <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-yellow-400 transition-all duration-300"
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
+                              <span className="w-8 text-muted-foreground">{count}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Individual Reviews */}
+                <div className="space-y-4">
+                  {reviews.map((review) => (
+                    <Card key={review.id}>
+                      <CardContent className="p-6">
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="font-semibold">{review.customer_name}</div>
+                              <div className="flex items-center gap-2 mt-1">
+                                {renderStars(review.rating, 'w-4 h-4')}
+                                <span className="text-sm text-muted-foreground">
+                                  {new Date(review.created_at || '').toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {review.review_text && (
+                            <p className="text-muted-foreground leading-relaxed">
+                              {review.review_text}
+                            </p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Star className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-semibold mb-2">No Reviews Yet</h3>
+                  <p className="text-muted-foreground">
+                    Be the first to review this product when you purchase it!
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </motion.div>
+        </section>
 
         {/* Related Products Section */}
         <section className="mt-20">

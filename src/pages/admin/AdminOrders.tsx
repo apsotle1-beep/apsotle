@@ -238,6 +238,9 @@ const AdminOrders = () => {
             params.set('customer_city', order.customer_info.city || '');
             params.set('customer_province', order.customer_info.province || '');
             if (order.customer_info.note) params.set('customer_note', order.customer_info.note);
+            
+            // Add review link
+params.set('reviewLink', `${window.location.origin}/review/${order.order_id}`);
 
             // Items with URLs
             const itemsPayload = order.items.map(item => ({

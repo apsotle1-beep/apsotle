@@ -51,6 +51,24 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, index = 0 }) => {
               {product.category}
             </span>
           </div>
+
+          {/* Multiple Images Indicator */}
+          {product.images && product.images.length > 1 && (
+            <div className="absolute top-4 right-4">
+              <span className="bg-background/90 backdrop-blur-sm text-foreground px-2 py-1 rounded-full text-xs font-medium">
+                +{product.images.length - 1}
+              </span>
+            </div>
+          )}
+
+          {/* Video Indicator */}
+          {product.video && (
+            <div className="absolute bottom-4 right-4">
+              <span className="bg-background/90 backdrop-blur-sm text-foreground px-2 py-1 rounded-full text-xs font-medium">
+                📹
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Content */}

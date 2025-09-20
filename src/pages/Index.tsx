@@ -4,7 +4,6 @@ import { ArrowRight, Star, Truck, Shield, Headphones } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Layout from '@/components/Layout';
 import ProductCard from '@/components/ProductCard';
-import AuthTest from '@/components/AuthTest';
 import { Button } from '@/components/ui/button';
 import { Product } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -163,21 +162,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Auth Test Section - Remove this after testing */}
-      <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-4xl font-bold mb-4">Authentication Test</h2>
-            <p className="text-xl text-muted-foreground">Test Google OAuth integration</p>
-          </motion.div>
-          <AuthTest />
-        </div>
-      </section>
 
       {/* Categories Preview */}
       <section className="py-16 bg-gradient-to-r from-primary/5 to-secondary/5">

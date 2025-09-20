@@ -21,15 +21,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAdmin } from '@/contexts/AdminContext';
 
 interface Product {
   id: number;
   name: string;
-  description: string;
+  description: string | null;
   price: number;
-  image: string;
-  video: string;
-  category: string;
+  image: string | null;
+  images: string[] | null;
+  video: string | null;
+  category: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const AdminProducts = () => {
@@ -45,13 +49,15 @@ const AdminProducts = () => {
     description: '',
     price: 0,
     image: '',
+    images: [],
     video: '',
     category: ''
   });
-  const [newProductImage, setNewProductImage] = useState<File | null>(null);
+  const [newProductImages, setNewProductImages] = useState<File[]>([]);
   const [newProductVideo, setNewProductVideo] = useState<File | null>(null);
   
   const { toast } = useToast();
+  const { isAuthenticated, user } = useAdmin();
   
   // Predefined categories for the dropdown
   const predefinedCategories = ['Electronics', 'Clothing', 'Accessories', 'Home', 'Sports', 'Books', 'Beauty', 'Toys', 'Automotive', 'Garden'];
@@ -66,7 +72,7 @@ const AdminProducts = () => {
     if (error) {
       console.error(error);
     } else {
-      setProducts(data);
+      setProducts(data as Product[]);
     }
   };
 
@@ -115,43 +121,80 @@ const AdminProducts = () => {
       return;
     }
 
-    let imageUrl = newProduct.image;
-    let videoUrl = newProduct.video;
+    // Close modal immediately for better UX
+    setIsAddModalOpen(false);
 
-    if (newProduct.image instanceof File) {
-      imageUrl = await handleFileUpload(newProduct.image);
-    }
+    // Show loading toast
+    toast({
+      title: "Adding Product",
+      description: "Please wait while we add your product...",
+    });
 
-    if (newProduct.video instanceof File) {
-      videoUrl = await handleFileUpload(newProduct.video);
-    }
+    try {
+      let imageUrl = newProduct.image;
+      let videoUrl = newProduct.video;
+      let imageUrls: string[] = [];
 
-    const { data, error } = await supabase.from('products').insert([
-      {
-        name: newProduct.name,
-        description: newProduct.description,
-        price: newProduct.price,
-        image: imageUrl,
-        video: videoUrl,
-        category: newProduct.category,
-      },
-    ]);
+      // Upload main image if it's a file
+      if (newProduct.image && typeof newProduct.image === 'object' && newProduct.image instanceof File) {
+        imageUrl = await handleFileUpload(newProduct.image);
+      }
 
-    if (error) {
-      console.error(error);
+      // Upload additional images
+      if (newProductImages.length > 0) {
+        const uploadPromises = newProductImages.map(file => handleFileUpload(file));
+        const uploadedUrls = await Promise.all(uploadPromises);
+        imageUrls = uploadedUrls.filter(url => url !== null) as string[];
+      }
+
+      // Upload video if it's a file
+      if (newProductVideo) {
+        videoUrl = await handleFileUpload(newProductVideo);
+      }
+
+      // Combine main image with additional images
+      const allImages = [imageUrl, ...imageUrls].filter(url => url && url !== '');
+
+      const { data, error } = await supabase.from('products').insert([
+        {
+          name: newProduct.name,
+          description: newProduct.description,
+          price: newProduct.price,
+          image: imageUrl as string,
+          images: allImages,
+          video: videoUrl as string,
+          category: newProduct.category,
+        },
+      ]);
+
+      if (error) {
+        console.error(error);
+        toast({
+          title: "Error",
+          description: "Failed to add product",
+          variant: "destructive",
+        });
+        // Re-open modal on error so user can try again
+        setIsAddModalOpen(true);
+      } else {
+        fetchProducts();
+        toast({
+          title: "Success",
+          description: "Product added successfully",
+        });
+        setNewProduct({ name: '', description: '', price: 0, image: '', images: [], video: '', category: '' });
+        setNewProductImages([]);
+        setNewProductVideo(null);
+      }
+    } catch (error) {
+      console.error('Unexpected error:', error);
       toast({
         title: "Error",
-        description: "Failed to add product",
+        description: "An unexpected error occurred while adding the product",
         variant: "destructive",
       });
-    } else {
-      fetchProducts();
-      toast({
-        title: "Success",
-        description: "Product added successfully",
-      });
-      setNewProduct({ name: '', description: '', price: 0, image: '', video: '', category: '' });
-      setIsAddModalOpen(false);
+      // Re-open modal on error
+      setIsAddModalOpen(true);
     }
   };
 
@@ -160,14 +203,18 @@ const AdminProducts = () => {
 
     let imageUrl = selectedProduct.image;
     let videoUrl = selectedProduct.video;
+    let imageUrls: string[] = selectedProduct.images || [];
 
-    if (selectedProduct.image instanceof File) {
+    if (selectedProduct.image && typeof selectedProduct.image === 'object' && selectedProduct.image instanceof File) {
       imageUrl = await handleFileUpload(selectedProduct.image);
     }
 
-    if (selectedProduct.video instanceof File) {
+    if (selectedProduct.video && typeof selectedProduct.video === 'object' && selectedProduct.video instanceof File) {
       videoUrl = await handleFileUpload(selectedProduct.video);
     }
+
+    // Combine main image with additional images
+    const allImages = [imageUrl, ...imageUrls].filter(url => url && url !== '');
 
     const { data, error } = await supabase
       .from('products')
@@ -175,8 +222,9 @@ const AdminProducts = () => {
         name: selectedProduct.name,
         description: selectedProduct.description,
         price: selectedProduct.price,
-        image: imageUrl,
-        video: videoUrl,
+        image: imageUrl as string,
+        images: allImages,
+        video: videoUrl as string,
         category: selectedProduct.category,
       })
       .eq('id', selectedProduct.id);
@@ -199,15 +247,62 @@ const AdminProducts = () => {
     }
   };
 
-  const handleDeleteProduct = (productId: number) => {
-    const updatedProducts = products.filter(p => p.id !== productId);
-    setProducts(updatedProducts);
-    console.log('Deleted product ID:', productId);
-    
-    toast({
-      title: "Success",
-      description: "Product deleted successfully",
-    });
+  const handleDeleteProduct = async (productId: number) => {
+    try {
+      // Ensure user is authenticated before attempting deletion
+      if (!isAuthenticated || !user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in as an admin to delete products.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase.from('products').delete().eq('id', productId);
+
+      if (error) {
+        console.error('Error deleting product:', error);
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+
+        // Check if it's an authentication error
+        if (error.code === 'PGRST301' || error.message.includes('JWT')) {
+          toast({
+            title: "Authentication Error",
+            description: "Please log in again as an admin to perform this action.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: `Failed to delete product: ${error.message}`,
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+
+      // Update local state only after successful database deletion
+      const updatedProducts = products.filter(p => p.id !== productId);
+      setProducts(updatedProducts);
+
+      toast({
+        title: "Success",
+        description: "Product deleted successfully",
+      });
+    } catch (err) {
+      console.error('Unexpected error during product deletion:', err);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred while deleting the product.",
+        variant: "destructive",
+      });
+    }
   };
 
   const openEditModal = (product: Product) => {
@@ -285,18 +380,54 @@ const AdminProducts = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="image">Image</Label>
+                  <Label htmlFor="image">Main Image</Label>
                   <Input
                     id="image"
                     type="file"
-                    onChange={(e) => setNewProductImage(e.target.files ? e.target.files[0] : null)}
+                    accept="image/*"
+                    onChange={(e) => setNewProduct({...newProduct, image: e.target.files ? e.target.files[0] : null})}
                   />
+                </div>
+                <div>
+                  <Label htmlFor="images">Additional Images</Label>
+                  <Input
+                    id="images"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        const files = Array.from(e.target.files);
+                        setNewProductImages(prev => [...prev, ...files]);
+                      }
+                    }}
+                  />
+                  {newProductImages.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      <p className="text-sm text-muted-foreground">Selected images:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {newProductImages.map((file, index) => (
+                          <div key={index} className="flex items-center gap-2 bg-muted p-2 rounded">
+                            <span className="text-sm truncate max-w-[100px]">{file.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => setNewProductImages(prev => prev.filter((_, i) => i !== index))}
+                              className="text-destructive hover:text-destructive/80"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="video">Video</Label>
                   <Input
                     id="video"
                     type="file"
+                    accept="video/*"
                     onChange={(e) => setNewProductVideo(e.target.files ? e.target.files[0] : null)}
                   />
                 </div>
@@ -353,12 +484,22 @@ const AdminProducts = () => {
               transition={{ duration: 0.4, delay: index * 0.1 }}
             >
               <Card className="overflow-hidden">
-                <div className="aspect-square overflow-hidden">
+                <div className="aspect-square overflow-hidden relative">
                   <img
                     src={product.image}
                     alt={product.name}
                     className="w-full h-full object-cover transition-transform hover:scale-105"
                   />
+                  {product.images && product.images.length > 1 && (
+                    <div className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm text-foreground px-2 py-1 rounded-full text-xs font-medium">
+                      +{product.images.length - 1} more
+                    </div>
+                  )}
+                  {product.video && (
+                    <div className="absolute bottom-2 right-2 bg-background/90 backdrop-blur-sm text-foreground px-2 py-1 rounded-full text-xs font-medium">
+                      📹 Video
+                    </div>
+                  )}
                 </div>
                 <CardContent className="p-4">
                   <div className="space-y-3">
@@ -479,20 +620,70 @@ const AdminProducts = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="edit-image">Image</Label>
+                  <Label htmlFor="edit-image">Main Image</Label>
                   <Input
                     id="edit-image"
                     type="file"
+                    accept="image/*"
                     onChange={(e) => setSelectedProduct({...selectedProduct, image: e.target.files ? e.target.files[0] : ''})}
                   />
+                  {selectedProduct.image && typeof selectedProduct.image === 'string' && (
+                    <div className="mt-2">
+                      <img src={selectedProduct.image} alt="Current image" className="w-20 h-20 object-cover rounded" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="edit-images">Additional Images</Label>
+                  <Input
+                    id="edit-images"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        const files = Array.from(e.target.files);
+                        setSelectedProduct({...selectedProduct, images: [...(selectedProduct.images || []), ...files.map(f => f.name)]});
+                      }
+                    }}
+                  />
+                  {selectedProduct.images && selectedProduct.images.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      <p className="text-sm text-muted-foreground">Current images:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedProduct.images.map((img, index) => (
+                          <div key={index} className="flex items-center gap-2 bg-muted p-2 rounded">
+                            {typeof img === 'string' && img.startsWith('http') ? (
+                              <img src={img} alt={`Image ${index + 1}`} className="w-8 h-8 object-cover rounded" />
+                            ) : (
+                              <span className="text-sm truncate max-w-[100px]">{img}</span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedProduct({...selectedProduct, images: selectedProduct.images?.filter((_, i) => i !== index)})}
+                              className="text-destructive hover:text-destructive/80"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="edit-video">Video</Label>
                   <Input
                     id="edit-video"
                     type="file"
+                    accept="video/*"
                     onChange={(e) => setSelectedProduct({...selectedProduct, video: e.target.files ? e.target.files[0] : ''})}
                   />
+                  {selectedProduct.video && typeof selectedProduct.video === 'string' && (
+                    <div className="mt-2">
+                      <video src={selectedProduct.video} className="w-32 h-20 object-cover rounded" controls />
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-2 pt-4">
                   <Button onClick={handleEditProduct} className="flex-1">

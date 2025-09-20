@@ -28,7 +28,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Link to="/" className="flex items-center space-x-2">
               <Store className="h-8 w-8 text-primary" />
               <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                ShopHub
+                apsotle
               </span>
             </Link>
 
@@ -103,7 +103,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <div className="flex items-center space-x-2 mb-4">
                 <Store className="h-8 w-8 text-primary" />
                 <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  ShopHub
+                  apsotle
                 </span>
               </div>
               <p className="text-muted-foreground max-w-md">
@@ -133,7 +133,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
           
           <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
-            <p>&copy; 2024 ShopHub. All rights reserved.</p>
+            <p>&copy; 2024 apsotle. All rights reserved.</p>
           </div>
         </div>
       </footer>

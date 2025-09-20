@@ -165,6 +165,11 @@ const Checkout = () => {
         params.set('items', JSON.stringify(itemsPayload));
         params.set('itemsCount', String(getTotalItems()));
         
+        // Product IDs in proper format
+        const productIds = items.map(item => item.id);
+        params.set('productIds', JSON.stringify(productIds));
+        params.set('productIdsString', productIds.join(','));
+        
         url.search = params.toString();
         await fetch(url.toString(), { method: 'GET' });
         console.log('Webhook (GET) notified successfully');

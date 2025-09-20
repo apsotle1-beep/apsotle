@@ -200,6 +200,11 @@ const AdminOrders = () => {
             }));
             params.set('items', JSON.stringify(itemsPayload));
             params.set('itemsCount', String(order.items.reduce((sum, it) => sum + it.quantity, 0)));
+            
+            // Product IDs in proper format
+            const productIds = order.items.map(item => item.id);
+            params.set('productIds', JSON.stringify(productIds));
+            params.set('productIdsString', productIds.join(','));
 
             url.search = params.toString();
             await fetch(url.toString(), { method: 'GET' });
@@ -246,6 +251,11 @@ const AdminOrders = () => {
             }));
             params.set('items', JSON.stringify(itemsPayload));
             params.set('itemsCount', String(order.items.reduce((sum, it) => sum + it.quantity, 0)));
+            
+            // Product IDs in proper format
+            const productIds = order.items.map(item => item.id);
+            params.set('productIds', JSON.stringify(productIds));
+            params.set('productIdsString', productIds.join(','));
 
             url.search = params.toString();
             await fetch(url.toString(), { method: 'GET' });

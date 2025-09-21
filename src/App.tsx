@@ -21,6 +21,11 @@ import AdminCustomers from "./pages/admin/AdminCustomers";
 import AuthCallback from "./pages/AuthCallback";
 import Settings from "./pages/Settings";
 import Review from "./pages/Review";
+import ContactUs from "./pages/ContactUs";
+import ShippingInfo from "./pages/ShippingInfo";
+import Returns from "./pages/Returns";
+import FAQ from "./pages/FAQ";
+import ScrollToTop from "./components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +44,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <ScrollToTop />
             <Routes>
               {/* Store Routes */}
               <Route path="/" element={<Index />} />
@@ -50,6 +56,10 @@ const App = () => (
               <Route path="/settings" element={<Settings />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/review/:orderId" element={<Review />} />
+              <Route path="/contact" element={<ContactUs />} />
+              <Route path="/shipping" element={<ShippingInfo />} />
+              <Route path="/returns" element={<Returns />} />
+              <Route path="/faq" element={<FAQ />} />
               
               {/* Admin Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />

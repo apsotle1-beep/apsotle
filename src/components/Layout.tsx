@@ -124,10 +124,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div>
               <h3 className="font-semibold mb-4">Customer Service</h3>
               <ul className="space-y-2 text-muted-foreground">
-                <li>Contact Us</li>
-                <li>Shipping Info</li>
-                <li>Returns</li>
-                <li>FAQ</li>
+                <li><Link to="/contact" className="hover:text-primary transition-colors">Contact Us</Link></li>
+                <li><Link to="/shipping" className="hover:text-primary transition-colors">Shipping Info</Link></li>
+                <li><Link to="/returns" className="hover:text-primary transition-colors">Returns</Link></li>
+                <li><Link to="/faq" className="hover:text-primary transition-colors">FAQ</Link></li>
               </ul>
             </div>
           </div>
